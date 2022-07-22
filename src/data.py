@@ -1,22 +1,10 @@
 """Data generator main file"""
-# TODO : add elastic deformation
-import os
+# TODO : add complete rotation & elastic deformation
 import numpy as np
-import matplotlib.pyplot as plt
-
-from tensorflow.keras.datasets import cifar10
-
 import jax
 import jax.numpy as jnp
 from jax import random
-from jax import make_jaxpr
-from jax.config import config
-from jax import value_and_grad
-from jax import grad, vmap, pmap, jit
-
-import optax
-from flax import linen as nn
-from flax.training import train_state
+from jax import vmap, jit
 
 
 def rotate_90(img):
@@ -122,14 +110,12 @@ def normalise(array):
     return jnp.array(array / 255.)
 
 
-
-
-def data_generator(images, labels, batch_size=128, is_valid=False, key=None):
+def data_generator(images, masks, batch_size=128, is_valid=False, key=None):
     """Generates batches of data from a given dataset.
 
     Args:
         images: Image data represented by a ndarray
-        labels: One-hot enocded labels
+        masks: Mask
         batch_size: Number of data points in a single batch
         is_valid: (Boolean) If validation data, then don't shuffle and
                     don't apply any augmentation
@@ -153,10 +139,9 @@ def data_generator(images, labels, batch_size=128, is_valid=False, key=None):
     for batch in range(num_batches):
         curr_idx = indices[batch * batch_size: (batch + 1) * batch_size]
         batch_images = images[curr_idx]
-        batch_labels = labels[curr_idx]
+        batch_masks = masks[curr_idx]
 
         if not is_valid:
             batch_images = augment_images(batch_images, key=key)
-        yield batch_images, batch_labels
-
-
+            batch_masks = augment_images(batch_masks, key=key)
+        yield batch_images, batch_masks
