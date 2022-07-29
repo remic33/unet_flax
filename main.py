@@ -1,19 +1,19 @@
 """Main unet project file. Run model for training & inference"""
-from absl import app, flags, logging
-from jax import random, numpy as jnp
-from src.model import Unet
+from absl import app
+
+from src.data_pipe import load_data
+from src.train import Train
 
 
 def main(argv):
-    key1, key2 = random.split(random.PRNGKey(0), 2)
-    x = random.uniform(key1, (4, 4))
+    images_dir = "data/images/image"
+    mask_dir = "data/images/label"
+    val_percent = 0.2
+    batch_size = 6
+    train_loader, val_loader = load_data(val_percent=val_percent, images_dir= images_dir, mask_dir= mask_dir, batch_size= batch_size)
+    unet = Train()
+    unet.run(train_loader=train_loader, val_loader=val_loader)
 
-    model = Unet(features=[3, 4, 5])
-    params = model.init(key2, x)
-    y = model.apply(params, x)
-
-    print('initialized parameter shapes:\n', jax.tree_map(jnp.shape, unfreeze(params)))
-    print('output:\n', y)
 
 if __name__ == "__main__":
     try:
